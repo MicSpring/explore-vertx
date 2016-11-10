@@ -27,6 +27,7 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.14'
     compile 'org.codehaus.groovy:groovy-all:2.3.11'
     compile "io.vertx:vertx-core:$vertx"
+    compile "io.vertx:vertx-web:$vertx"
     compile "io.vertx:vertx-rx-groovy:$vertx"
     compile "io.vertx:vertx-rx-java:$vertx"
 
