@@ -1,14 +1,10 @@
 package com.subha.vertx
 
 import io.vertx.core.DeploymentOptions
-import io.vertx.core.http.HttpServer
 import io.vertx.core.json.JsonObject
-import io.vertx.rx.java.ObservableFuture
-import io.vertx.rx.java.RxHelper
-import io.vertx.rxjava.core.AbstractVerticle
 import io.vertx.rxjava.core.Vertx
 import rx.Observable
-import com.subha.vertx.verticle.Server
+import com.subha.vertx.verticles.Server
 
 
 /**

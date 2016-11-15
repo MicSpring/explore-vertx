@@ -1,4 +1,4 @@
-package com.subha.vertx.verticle
+package com.subha.vertx.verticles
 
 import spock.lang.Specification
 
