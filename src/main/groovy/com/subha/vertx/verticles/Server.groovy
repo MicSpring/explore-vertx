@@ -1,9 +1,13 @@
 package com.subha.vertx.verticles
 
+import com.google.inject.Inject
 import com.subha.vertx.domains.Currency
 import com.subha.vertx.domains.Denomination
+import com.subha.vertx.service.VertxService
 import io.vertx.core.Future
 import io.vertx.core.http.HttpMethod
+import io.vertx.core.http.HttpServer
+import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -11,11 +15,14 @@ import io.vertx.core.metrics.Measured
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.StaticHandler
+import io.vertx.rx.java.ObservableFuture
 import io.vertx.rxjava.core.AbstractVerticle
+import io.vertx.rxjava.core.RxHelper
 import io.vertx.rxjava.core.Vertx
 import io.vertx.rxjava.ext.jdbc.JDBCClient
 import io.vertx.rxjava.ext.sql.SQLConnection
 import rx.Observable
+import rx.Observer
 
 /**
  * Created by user on 11/9/2016.
@@ -23,6 +30,17 @@ import rx.Observable
 class Server extends AbstractVerticle {
 
     def denominations = createDenominations()
+
+    def vertxService
+
+    @Inject
+    public Server(VertxService vertxService){
+        this.vertxService   = vertxService
+    }
+
+    public Server(){
+
+    }
 
     @Override
     public void start(Future<Void> fut) throws Exception {
@@ -36,6 +54,7 @@ class Server extends AbstractVerticle {
                 fut.fail(it.cause())
         })
 */
+        println "#### The Dependency is: ${vertxService.serve()}"
 
         //JDBC properties configuration
         JsonObject jdbcConfig = new JsonObject()
@@ -123,16 +142,65 @@ class Server extends AbstractVerticle {
 
 
         /**
-         * Using router instead of Request Handler
+         * Using router instead of Request Handler to start the server
          */
-        vertx.createHttpServer().requestHandler(router.&accept)
+       /* vertx.createHttpServer().requestHandler(router.&accept)
                 .listen(config().getInteger("http.port",8070),{
             println "The Server Start Status: $it"
             if(it.succeeded())
                 fut.complete()
             else
                 fut.fail(it.cause())
-        })
+        })*/
+
+        //Rxified Version of the Vertx Server
+
+        //UserObservable Handler
+
+        /*def serverHandler = io.vertx.rx.java.RxHelper.observableHandler()
+        serverHandler.subscribe{
+            status ->   if(status.succeeded())
+                            fut.complete()
+                        else
+                            fut.fail(status.cause())
+        }*/
+
+        //Using Future Handler
+
+        /*ObservableFuture<HttpServer> serverFuture = io.vertx.rx.java.RxHelper.observableFuture();
+        serverFuture.subscribe(
+                { io.vertx.core.http.HttpServer server -> println "The Server Start Status: $server "},
+                {failure -> println "The Failure Status: $failure"}
+        )*/
+
+        //Using Observer
+        Observer<HttpServer> observer = new Observer<HttpServer>() {
+            @Override
+            void onCompleted() {
+                println "Server Start Completed....."
+
+            }
+
+            @Override
+            void onError(Throwable e) {
+                e.printStackTrace()
+            }
+
+            @Override
+            void onNext(HttpServer httpServer) {
+                println "The Server Start Status: $httpServer "
+
+            }
+        }
+
+        def observerHandler = io.vertx.rx.java.RxHelper.toFuture(observer);
+
+        vertx.createHttpServer(
+                new HttpServerOptions().setPort(config().getInteger("http.port",8070))
+                .setHost("localhost"))
+                .requestHandler(router.&accept)
+                .listen(observerHandler)
+
 
     }
 
