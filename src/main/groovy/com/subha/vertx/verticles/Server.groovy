@@ -3,6 +3,7 @@ package com.subha.vertx.verticles
 import com.google.inject.Inject
 import com.subha.vertx.domains.Currency
 import com.subha.vertx.domains.Denomination
+import com.subha.vertx.guice.dependency.Dependency
 import com.subha.vertx.service.VertxService
 import io.vertx.core.Future
 import io.vertx.core.http.HttpMethod
@@ -11,13 +12,10 @@ import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
-import io.vertx.core.metrics.Measured
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.StaticHandler
-import io.vertx.rx.java.ObservableFuture
 import io.vertx.rxjava.core.AbstractVerticle
-import io.vertx.rxjava.core.RxHelper
 import io.vertx.rxjava.core.Vertx
 import io.vertx.rxjava.ext.jdbc.JDBCClient
 import io.vertx.rxjava.ext.sql.SQLConnection
@@ -31,15 +29,13 @@ class Server extends AbstractVerticle {
 
     def denominations = createDenominations()
 
-    def vertxService
+    Dependency dependency
+    VertxService vertxService
 
     @Inject
-    public Server(VertxService vertxService){
-        this.vertxService   = vertxService
-    }
-
-    public Server(){
-
+    public Server(Dependency dependency, VertxService vertxService){
+        this.dependency   = dependency
+        this.vertxService = vertxService
     }
 
     @Override
@@ -54,7 +50,8 @@ class Server extends AbstractVerticle {
                 fut.fail(it.cause())
         })
 */
-        println "#### The Dependency is: ${vertxService.serve()}"
+        println "#### The Dependency is: ${dependency.serve()}"
+        vertxService.serve()
 
         //JDBC properties configuration
         JsonObject jdbcConfig = new JsonObject()

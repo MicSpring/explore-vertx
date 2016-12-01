@@ -1,7 +1,6 @@
 package com.subha.vertx.binder
 
 import com.google.inject.AbstractModule
-import com.google.inject.Singleton
 import com.subha.vertx.service.VertxService
 import com.subha.vertx.service.VertxServiceImpl
 
@@ -12,6 +11,6 @@ class ServiceBinder extends AbstractModule{
 
     @Override
     protected void configure() {
-        bind(VertxService).to(VertxServiceImpl).in(Singleton)
+        this.bind(VertxService.class).to(VertxServiceImpl.class)
     }
 }
