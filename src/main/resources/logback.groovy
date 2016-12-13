@@ -5,6 +5,8 @@ import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 
 import static ch.qos.logback.classic.Level.DEBUG
+import static ch.qos.logback.classic.Level.INFO
+import static ch.qos.logback.classic.Level.INFO
 
 appender("FILE",RollingFileAppender){
     file = "logs/logfile.log"
@@ -14,7 +16,7 @@ appender("FILE",RollingFileAppender){
         maxFileSize = "1MB"
     }
     encoder(PatternLayoutEncoder) {
-        pattern = "%msg%n"
+        pattern = "%level %logger - -> %msg%n"
     }
 }
 
@@ -22,7 +24,8 @@ appender("ASYNC",AsyncAppender){
     appenderRef('FILE')
 }
 
-logger("com.subha", DEBUG,["ASYNC"])
+logger("com.subha", INFO,["ASYNC"])
+logger("io.vertx", INFO,["ASYNC"])
 root(DEBUG, ["ASYNC"])
 
 
