@@ -1,10 +1,12 @@
 package com.subha.vertx.verticles
 
 import com.google.inject.Inject
+import com.subha.vertx.binder.ServiceBinder
 import com.subha.vertx.domains.Currency
 import com.subha.vertx.domains.Denomination
 import com.subha.vertx.guice.dependency.Dependency
 import com.subha.vertx.service.VertxService
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServer
@@ -19,6 +21,7 @@ import io.vertx.rxjava.core.AbstractVerticle
 import io.vertx.rxjava.core.Vertx
 import io.vertx.rxjava.ext.jdbc.JDBCClient
 import io.vertx.rxjava.ext.sql.SQLConnection
+import org.slf4j.LoggerFactory
 import rx.Observable
 import rx.Observer
 
@@ -27,16 +30,18 @@ import rx.Observer
  */
 class Server extends AbstractVerticle {
 
+    static def logger = LoggerFactory.getLogger(Server)
+
     def denominations = createDenominations()
 
     Dependency dependency
     VertxService vertxService
 
-    @Inject
+   /* @Inject
     public Server(Dependency dependency, VertxService vertxService){
         this.dependency   = dependency
         this.vertxService = vertxService
-    }
+    }*/
 
     @Override
     public void start(Future<Void> fut) throws Exception {
@@ -50,9 +55,9 @@ class Server extends AbstractVerticle {
                 fut.fail(it.cause())
         })
 */
-        println "#### The Dependency is: ${dependency.serve()}"
+        /*println "#### The Dependency is: ${dependency.serve()}"
         vertxService.serve()
-
+*/
         //JDBC properties configuration
         JsonObject jdbcConfig = new JsonObject()
                 .put("url","jdbc:hsqldb:mem:db?shutdown=true")
@@ -65,7 +70,7 @@ class Server extends AbstractVerticle {
         Observable<SQLConnection> connectionObservable = jdbcClient.getConnectionObservable()
         connectionObservable.subscribe(
                 {conn ->
-                    println "The Connection is $conn"
+                    logger.debug "The Connection is $conn"
                     connection = conn
                 }
                 ,
@@ -73,7 +78,7 @@ class Server extends AbstractVerticle {
                     error.printStackTrace()
                 },
                 {
-                    println "JDBC coonection completed"
+                    logger.debug "JDBC coonection completed"
         }
 
     )
@@ -174,7 +179,7 @@ class Server extends AbstractVerticle {
         Observer<HttpServer> observer = new Observer<HttpServer>() {
             @Override
             void onCompleted() {
-                println "Server Start Completed....."
+                logger.debug "####### Server 1 Start Completed....."
 
             }
 
@@ -185,7 +190,7 @@ class Server extends AbstractVerticle {
 
             @Override
             void onNext(HttpServer httpServer) {
-                println "The Server Start Status: $httpServer "
+                logger.debug "####### The Server 1 Start Status: $httpServer "
 
             }
         }
@@ -193,7 +198,7 @@ class Server extends AbstractVerticle {
         def observerHandler = io.vertx.rx.java.RxHelper.toFuture(observer);
 
         vertx.createHttpServer(
-                new HttpServerOptions().setPort(config().getInteger("http.port",8070))
+                new HttpServerOptions().setPort(config().getInteger("http.port.server1",8070))
                 .setHost("localhost"))
                 .requestHandler(router.&accept)
                 .listen(observerHandler)

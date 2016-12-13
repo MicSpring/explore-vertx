@@ -63,7 +63,7 @@ dependencies {
 mainClassName = "com.subha.vertx.VertxGuiceMain"
 
 run {
-    args = ['run', "java-guice:com.subha.vertx.verticles.Server", "--launcher-class=$mainClassName"]
+    args = ['run', "java-guice:com.subha.vertx.verticles.MasterVerticle"]
 }
 
 

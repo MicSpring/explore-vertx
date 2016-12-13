@@ -1,25 +1,19 @@
 package com.subha.vertx.guice.module
 
-import com.google.common.base.Preconditions
 import com.google.inject.AbstractModule
-import com.google.inject.Injector
 import com.subha.vertx.guice.dependency.DepImpl
 import com.subha.vertx.guice.dependency.Dependency
-import io.vertx.core.Vertx
+import io.vertx.rxjava.core.Vertx
 
 /**
- * Created by user on 12/1/2016.
+ * Created by user on 12/11/2016.
  */
-class VertxModule extends AbstractModule{
-
+class VertxModule2 extends AbstractModule{
     private final Vertx vertx
-    private final Injector injector
 
-    VertxModule(Vertx vertx, Injector injector){
-        if(vertx) {
+    VertxModule2(Vertx vertx){
+        if(vertx)
             this.vertx = vertx
-            this.injector = injector
-        }
         else
             throw new NullPointerException()
     }
@@ -27,7 +21,6 @@ class VertxModule extends AbstractModule{
     @Override
     protected void configure() {
         this.bind(Vertx).toInstance(this.vertx)
-        this.bind(Dependency).to(DepImpl)
-        this.bind(Injector).to(injector)
+        this.bind(Dependency)to(DepImpl)
     }
 }
