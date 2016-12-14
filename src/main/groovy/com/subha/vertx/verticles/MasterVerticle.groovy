@@ -5,6 +5,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import com.google.inject.Module
 import com.subha.vertx.binder.ServiceBinder
+import com.subha.vertx.guice.launcher.GuiceVertxLauncher
 import com.subha.vertx.guice.module.VertxModule2
 import com.subha.vertx.service.VertxService
 import groovy.util.logging.Slf4j
@@ -21,7 +22,7 @@ import io.vertx.rxjava.core.Vertx
 class MasterVerticle extends AbstractVerticle {
 
     static DeploymentOptions deploymentOptions
-    Injector injector
+    static Injector injector
     VertxService vertxService
 
     @Inject
@@ -38,9 +39,11 @@ class MasterVerticle extends AbstractVerticle {
     }
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        //injector = Guice.createInjector(getModules(vertx))
+        injector = GuiceVertxLauncher.injector
 
-        println "The Injector is: $injector"
+        def verticle2 = injector.getInstance(Server2.class)
+        def verticle3 = injector.getInstance(Server3.class)
+
         vertxService.serve()
 
 
@@ -51,7 +54,7 @@ class MasterVerticle extends AbstractVerticle {
                     else {
                         println "Yes: ${asyncResult.succeeded()}"
 
-                        vertx.deployVerticle(Server3.class.name, deploymentOptions,
+                        vertx.deployVerticle(verticle3, deploymentOptions,
                                 { serverAsyncResult ->
                                     println "The Server 3 is: ${serverAsyncResult.succeeded()}"
                                     if(!serverAsyncResult.succeeded())
@@ -59,7 +62,7 @@ class MasterVerticle extends AbstractVerticle {
                                 }
                         )
 
-                        vertx.deployVerticle(Server2.class.name, deploymentOptions,
+                        vertx.deployVerticle(verticle2, deploymentOptions,
                                 { server2AsyncResult ->
                                     println "The Server 2 is: ${server2AsyncResult.succeeded()}"
                                     if(!server2AsyncResult.succeeded())

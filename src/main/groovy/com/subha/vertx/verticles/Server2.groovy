@@ -23,18 +23,18 @@ class Server2 extends AbstractVerticle {
     Dependency dependency
     VertxService vertxService
 
-    /*@Inject
+    @Inject
     public Server2(Dependency dependency, VertxService vertxService) {
         this.dependency = dependency
         this.vertxService = vertxService
-    }*/
+    }
 
     @Override
     public void start(Future<Void> fut) throws Exception {
 
-        /*println "#### The Dependency in Server2 is: ${dependency.serve()}"
+        println "#### The Dependency in Server2 is: ${dependency.serve()}"
         vertxService.serve()
-*/
+
         Router router = Router.router(vertx);
 
         router.route(HttpMethod.GET,'/').handler{ routingContext->

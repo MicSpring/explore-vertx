@@ -13,12 +13,12 @@ import io.vertx.core.Vertx
 class VertxModule extends AbstractModule{
 
     private final Vertx vertx
-    private final Injector injector
+   // private final Injector injector
 
-    VertxModule(Vertx vertx, Injector injector){
+    VertxModule(Vertx vertx/*, Injector injector*/){
         if(vertx) {
             this.vertx = vertx
-            this.injector = injector
+            //this.injector = injector
         }
         else
             throw new NullPointerException()
@@ -28,6 +28,6 @@ class VertxModule extends AbstractModule{
     protected void configure() {
         this.bind(Vertx).toInstance(this.vertx)
         this.bind(Dependency).to(DepImpl)
-        this.bind(Injector).to(injector)
+        //this.bind(Injector).to(injector)
     }
 }

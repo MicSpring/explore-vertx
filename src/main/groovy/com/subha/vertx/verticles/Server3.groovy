@@ -1,5 +1,7 @@
 package com.subha.vertx.verticles
 
+import com.google.inject.Inject
+import com.subha.vertx.guice.dependency.Dependency
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.http.HttpServerOptions
 
@@ -8,7 +10,16 @@ import io.vertx.core.http.HttpServerOptions
  */
 class Server3 extends AbstractVerticle{
 
+    Dependency dependency
+
+    @Inject
+    public Server3(Dependency dependency){
+        this.dependency = dependency
+    }
+
     public void start() throws Exception {
+
+        println " **** The Dependency is: ${dependency.serve()}"
 
         vertx.createHttpServer(new HttpServerOptions()
                 .setPort(config().getInteger("http.port.server3",8093))

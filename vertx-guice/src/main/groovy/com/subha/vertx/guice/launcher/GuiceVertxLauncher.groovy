@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory
 class GuiceVertxLauncher extends Launcher{
 
     static def logger = LoggerFactory.getLogger(GuiceVertxLauncher)
+    static def injector;
 
     static main(args){
         println " ************ Guice Vertx Launcher Called....."
@@ -52,13 +53,18 @@ class GuiceVertxLauncher extends Launcher{
     }*/
 
     protected Injector createInjector(Vertx vertx){
-        Guice.createInjector(this.getModules(vertx))
+        if(injector == null) {
+            println "******  Creating Injector Instance....."
+            injector = Guice.createInjector(this.getModules(vertx))
+        }
+
+        injector
     }
 
     protected List<Module> getModules(Vertx vertx){
         println "Module added for $vertx"
         List<Module> moduleList = new LinkedList<>()
-        moduleList.add(new VertxModule(vertx,createInjector(vertx)))
+        moduleList.add(new VertxModule(vertx))
         moduleList
     }
 

@@ -1,5 +1,6 @@
 import ch.qos.logback.classic.AsyncAppender
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder
+import ch.qos.logback.core.ConsoleAppender
 import ch.qos.logback.core.FileAppender
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
@@ -20,13 +21,19 @@ appender("FILE",RollingFileAppender){
     }
 }
 
+appender("CONSOLE", ConsoleAppender) {
+    encoder(PatternLayoutEncoder) {
+        pattern = "%level %logger - -> %msg%n"
+    }
+}
+
 appender("ASYNC",AsyncAppender){
     appenderRef('FILE')
 }
 
-logger("com.subha", INFO,["ASYNC"])
-logger("io.vertx", INFO,["ASYNC"])
-root(DEBUG, ["ASYNC"])
+logger("com.subha", DEBUG,["FILE"],false)
+logger("io.vertx", DEBUG,["FILE"],false)
+root(DEBUG, ["FILE"])
 
 
 
