@@ -35,7 +35,8 @@ class MasterVerticle extends AbstractVerticle {
         deploymentOptions = new  DeploymentOptions().setConfig(new JsonObject()
                 .put("http.port.server1", 8081)
                 .put("http.port.server2", 8082)
-                .put("http.port.server3", 8083));
+                .put("http.port.server3", 8083)
+                .put("http.port.server4", 8084));
     }
     @Override
     public void start(Future<Void> startFuture) throws Exception {
@@ -43,6 +44,7 @@ class MasterVerticle extends AbstractVerticle {
 
         def verticle2 = injector.getInstance(Server2.class)
         def verticle3 = injector.getInstance(Server3.class)
+        def verticle4 = injector.getInstance(SockJSVerticle)
 
         vertxService.serve()
 
@@ -67,6 +69,14 @@ class MasterVerticle extends AbstractVerticle {
                                     println "The Server 2 is: ${server2AsyncResult.succeeded()}"
                                     if(!server2AsyncResult.succeeded())
                                         server2AsyncResult.cause().printStackTrace()
+                                }
+                        )
+
+                        vertx.deployVerticle(verticle4, deploymentOptions,
+                                { server4AsyncResult ->
+                                    println "The Server 4 is: ${server4AsyncResult.succeeded()}"
+                                    if(!server4AsyncResult.succeeded())
+                                        server4AsyncResult.cause().printStackTrace()
                                 }
                         )
                     }
