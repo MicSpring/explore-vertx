@@ -31,6 +31,8 @@ dependencies {
     compile "io.vertx:vertx-rx-groovy:$vertx"
     compile "io.vertx:vertx-rx-java:$vertx"
     compile "io.vertx:vertx-jdbc-client:$vertx"
+    compile "io.vertx:vertx-service-discovery:$vertx"
+    compile "io.vertx:vertx-circuit-breaker:$vertx"
 
 
     compile 'org.hsqldb:hsqldb:2.3.3'

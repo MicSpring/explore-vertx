@@ -50,6 +50,7 @@ class Server2 extends AbstractVerticle {
             @Override
             void onCompleted() {
                 println "Server 2 Start Completed....."
+                fut.complete()
 
             }
 
