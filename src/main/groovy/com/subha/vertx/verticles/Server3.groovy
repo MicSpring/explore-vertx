@@ -3,6 +3,8 @@ package com.subha.vertx.verticles
 import com.google.inject.Inject
 import com.subha.vertx.guice.dependency.Dependency
 import com.subha.vertx.handler.DataHandler
+import io.vertx.circuitbreaker.CircuitBreaker
+import io.vertx.circuitbreaker.CircuitBreakerOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.http.HttpClientResponse
 import io.vertx.core.http.HttpMethod
@@ -21,6 +23,8 @@ class Server3 extends AbstractVerticle{
 
     Dependency dependency
     ServiceDiscovery serviceDiscovery
+    CircuitBreakerOptions circuitBreakerOptions
+    CircuitBreaker circuitBreaker
 
     @Inject
     public Server3(Dependency dependency){
@@ -38,11 +42,19 @@ class Server3 extends AbstractVerticle{
         def sockJSHandler = SockJSHandler.create(vertx,sockJSHandlerOptions)
         sockJSHandler.socketHandler(new DataHandler())
 
+        circuitBreakerOptions = new CircuitBreakerOptions()
+                .setMaxFailures(5) // number of failure before opening the circuit
+                .setFallbackOnFailure(true) // do we call the fallback on failure
+                .setResetTimeout(10000)
+
+        circuitBreaker = CircuitBreaker.create("InvokeServer2-CB",vertx,circuitBreakerOptions)
+
         def router = Router.router(vertx)
 
         router.route(HttpMethod.GET,'/test').handler(sockJSHandler)
-        router.route(HttpMethod.GET,'/getB').handler({routingContext->
-                invokeB(routingContext,serviceDiscovery);})
+        router.route(HttpMethod.GET,'/getServer2').handler({routingContext->
+            println " ***** Invoking Server2 with Service Discovery ***** "
+            invokeServer2(routingContext,serviceDiscovery,circuitBreaker);})
 
         router.route('/*').handler(
                 StaticHandler.create())
@@ -59,7 +71,7 @@ class Server3 extends AbstractVerticle{
         })
     }
 
-    private void invokeB(RoutingContext context, ServiceDiscovery serviceDiscovery){
+    private void invokeServer2(RoutingContext context, ServiceDiscovery serviceDiscovery, CircuitBreaker cktBreaker){
         serviceDiscovery.getRecord(new JsonObject().put("name", "Server2"), { ar ->
             if (ar.succeeded() && ar.result() != null) {
                 // Retrieve the service reference
@@ -67,20 +79,42 @@ class Server3 extends AbstractVerticle{
                 // Retrieve the service object
                 def client = reference.get()
                 println "The Client class is: $client"
+
                 // You need to path the complete path
-                client.getNow("/", { HttpClientResponse response ->
 
-                    // ...
-                    //println "The Response is: ${response.getBody}"
-                    response.handler({buffer -> buffer.toString()})
-                    // Dont' forget to release the service
-                    reference.release()
+                circuitBreaker.openHandler({
+                    v1 -> println " @@@@@ Circuit Open @@@@@  "
+                })
+                        .closeHandler({v2 -> println " @@@@@ Circuit Closed @@@@@ "})
+                .halfOpenHandler({v3 -> println " @@@@@ Circuit Half Opened @@@@@ "})
 
+                circuitBreaker.executeWithFallback({future->
+
+                    client.getNow("/dataServer2", { HttpClientResponse response ->
+
+                        if(response.statusCode() == 200) {
+                            response.bodyHandler({ buffer ->
+                                println "##### The BodyHandler is:${buffer.toString()}"
+                                client.close();
+                                reference.release()
+                                future.complete(buffer.toString())
+                            })
+                        }
+                        else{
+                            future.fail("HTTP error with status Code ${response.statusCode()}" +
+                                    " with Message ${response.statusMessage()}");
+                        }
+
+                    })
+                },{ex ->
+                    ex.printStackTrace()
+                    return "Circuit Opened....."
                 })
             }
             else{
-                println("Alas!!! Server2 Not Found.....")
+                println("##### Alas!!! Server2 Not Found.....")
             }
         })
+        context.response().setStatusCode(200).end()
     }
 }

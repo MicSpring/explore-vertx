@@ -77,7 +77,7 @@ class MasterVerticle extends AbstractVerticle {
                                         println "The Server 2 Deployed Successfully... \n\n So, " +
                                                 "Publishing the Service..."
                                         publishService(startFuture,serviceDiscovery,"Server2")
-
+                                      //  println " #### Not Publising as of Now!!!!"
                                     }
                                 }
                         )
@@ -97,7 +97,7 @@ class MasterVerticle extends AbstractVerticle {
     }
 
     private void publishService(Future future, ServiceDiscovery serviceDiscovery,String name){
-        Record record = HttpEndpoint.createRecord(name,"localhost",getDeploymentOptions().config.getInteger("http.port.server2",8092),"/")
+        Record record = HttpEndpoint.createRecord(name,"localhost",getDeploymentOptions().config.getInteger("http.port.server2",8092),"/dataServer2")
         serviceDiscovery.publish(record,{asyncResultRecord ->
             if(asyncResultRecord.succeeded()){
                 println "Location:${asyncResultRecord.result().location} " +

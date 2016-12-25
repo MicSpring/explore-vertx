@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import com.subha.vertx.guice.dependency.Dependency
 import com.subha.vertx.service.VertxService
 import io.vertx.core.Future
+import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
@@ -12,7 +13,6 @@ import io.vertx.ext.web.Router
 import io.vertx.rxjava.core.AbstractVerticle
 import org.slf4j.LoggerFactory
 import rx.Observer
-
 /**
  * Created by user on 12/11/2016.
  */
@@ -45,6 +45,9 @@ class Server2 extends AbstractVerticle {
                     .end("<h1>Hello!!! Server Verticle 2 Welcomes You....</h1>");
 
         }
+        router.route(HttpMethod.GET,"/dataServer2").handler({routingContext ->
+            routingContext.response().setStatusCode(200).setStatusMessage("#### Response Sent with 200 OK...").end(Buffer.buffer("Service Discovered Successfully....".toUpperCase()).toString())
+        })
 
         Observer<HttpServer> observer = new Observer<HttpServer>() {
             @Override
