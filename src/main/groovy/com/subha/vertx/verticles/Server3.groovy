@@ -10,6 +10,8 @@ import io.vertx.core.http.HttpClientResponse
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.jdbc.JDBCClient
+import io.vertx.ext.sql.SQLConnection
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.StaticHandler
@@ -55,6 +57,10 @@ class Server3 extends AbstractVerticle{
         router.route(HttpMethod.GET,'/getServer2').handler({routingContext->
             println " ***** Invoking Server2 with Service Discovery ***** "
             invokeServer2(routingContext,serviceDiscovery,circuitBreaker);})
+
+        router.route(HttpMethod.GET,'/getJDBC').handler({routingContext->
+            println " ***** Fetching JDBC with Service Discovery ***** "
+            fetchJDBC(routingContext,serviceDiscovery,circuitBreaker);})
 
         router.route('/*').handler(
                 StaticHandler.create())
@@ -116,5 +122,47 @@ class Server3 extends AbstractVerticle{
             }
         })
         context.response().setStatusCode(200).end()
+    }
+
+    private void fetchJDBC (RoutingContext context, ServiceDiscovery serviceDiscovery, CircuitBreaker cktBreaker) {
+        serviceDiscovery.getRecord(new JsonObject().put("name", "jdbcDataSource"), { ar ->
+            if (ar.succeeded() && ar.result() != null) {
+                // Retrieve the service reference
+                def reference = serviceDiscovery.getReferenceWithConfiguration(
+                        ar.result(), // The record
+                        new JsonObject()/*.put("user","sa").put("password","")*/);
+
+                // Retrieve the service object
+                JDBCClient jdbcClient = reference.get();
+                println "The JDBC Client is:$jdbcClient"
+                jdbcClient.getConnection({asyncResult->
+
+                    if(asyncResult.succeeded()) {
+                        SQLConnection sqlConnection = asyncResult.result()
+
+                        sqlConnection.execute("CREATE TABLE IF NOT EXISTS Whisky (id INTEGER IDENTITY, name varchar(100), " +
+                                "origin varchar(100))", { result ->
+                            println "1:${result.result()}"
+                        })
+
+                        sqlConnection.execute("Insert into Whisky (id,name,origin) values (1,'Black Label','Scotch')", { result2 ->
+                            println "2:${result2.result()}"
+
+                        })
+
+                        sqlConnection.close()
+                    }
+                    else{
+                        println("Connection Not Obtained for:${asyncResult.failed()}")
+                    }
+                })
+
+                // ...
+
+                // when done
+                reference.release();
+            }
+
+        })
     }
 }

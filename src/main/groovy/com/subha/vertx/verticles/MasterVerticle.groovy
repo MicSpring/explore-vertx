@@ -14,6 +14,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.servicediscovery.Record
 import io.vertx.servicediscovery.ServiceDiscovery
 import io.vertx.servicediscovery.types.HttpEndpoint
+import io.vertx.servicediscovery.types.JDBCDataSource
 
 /**
  * Created by user on 12/13/2016.
@@ -52,6 +53,14 @@ class MasterVerticle extends AbstractVerticle {
 
         serviceDiscovery = ServiceDiscovery.create(vertx)
 
+        JsonObject jdbcConfig = new JsonObject()
+                .put("url","jdbc:hsqldb:mem:test?shutdown=true")
+                .put("driver_class","org.hsqldb.jdbcDriver")
+                .put("max_pool_size",3)
+                .put("username","sa")
+                .put("password","")
+
+
         startFuture.setHandler(
                 {asyncResult ->
                     if(!asyncResult.succeeded())
@@ -77,6 +86,7 @@ class MasterVerticle extends AbstractVerticle {
                                         println "The Server 2 Deployed Successfully... \n\n So, " +
                                                 "Publishing the Service..."
                                         publishService(startFuture,serviceDiscovery,"Server2")
+                                        publishJDBCService(startFuture,serviceDiscovery,jdbcConfig,"MY-H2-DB")
                                       //  println " #### Not Publising as of Now!!!!"
                                     }
                                 }
@@ -112,15 +122,26 @@ class MasterVerticle extends AbstractVerticle {
             }
 
         });
-        /*serviceDiscovery.publishObservable(record).subscribe(
-                {rec-> println "Location:${rec.location} \n Metadata:${rec.getMetadata()} " +
-                        "\n  Registration:${rec.getRegistration()} Status: ${rec.status}"},
-                {t->t.printStackTrace()
-                    println "Cannot Publish $name for ${t.getCause()}"
-                },
-                {println "Record Syccessfully Published..."
-                future.complete()}
-        )*/
+
+    }
+
+    private void publishJDBCService (Future future, ServiceDiscovery serviceDiscovery, JsonObject jdbcConfig, String dbName){
+       Record jdbcRecord = JDBCDataSource.createRecord("jdbcDataSource",jdbcConfig, new JsonObject().put("dbName",dbName))
+
+        serviceDiscovery.publish(jdbcRecord,{asyncResultRecord ->
+            if(asyncResultRecord.succeeded()){
+                println "JDBC Location:${asyncResultRecord.result().location} " +
+                        "\nJDBC  Metadata:${asyncResultRecord.result().getMetadata()} " +
+                        "\nJDBC   Registration:${asyncResultRecord.result().getRegistration()} " +
+                        "\nJDBC  Status: ${asyncResultRecord.result().status}"
+                println "JDBC  Record Syccessfully Published..."
+            }
+            else{
+                "Cannot Publish JDBC RECORD ${asyncResultRecord.result().name} " +
+                        "for ${asyncResultRecord.cause().printStackTrace()}"
+            }
+
+        });
     }
 }
 
