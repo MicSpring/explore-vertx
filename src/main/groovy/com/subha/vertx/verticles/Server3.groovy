@@ -142,27 +142,61 @@ class Server3 extends AbstractVerticle{
 
                         sqlConnection.execute("CREATE TABLE IF NOT EXISTS Whisky (id INTEGER IDENTITY, name varchar(100), " +
                                 "origin varchar(100))", { result ->
-                            println "1:${result.result()}"
+                            println "Table Creation Success:${result.succeeded()}"
+                            println "Table Creation Failed:${result.failed()}"
                         })
 
                         sqlConnection.execute("Insert into Whisky (id,name,origin) values (1,'Black Label','Scotch')", { result2 ->
-                            println "2:${result2.result()}"
+                            println "Insertion Success:${result2.succeeded()}"
+                            println "Insertion Failed:${result2.failed()}"
+
+                        })
+
+                        sqlConnection.commit({commitResult->
+                            println "Commit Result Successful:${commitResult.succeeded()}"
+                        })
+                        sqlConnection.query("Select * from Whisky",{queryResult->
+                            if(queryResult.succeeded()){
+                                io.vertx.ext.sql.ResultSet resultSet = queryResult.result()
+                                println "Now of Rows in Output: ${resultSet.numRows}"
+                                resultSet.rows.forEach({jsonObject->
+                                    println jsonObject.toString()
+                                })
+
+                            }
+                            else{
+                                println "QueryResult Failed for:${queryResult.failed()}" +
+                                "\n ${queryResult.cause()}" +
+                                        "\n StackTarce:${queryResult.cause().printStackTrace()}"
+
+                            }
 
                         })
 
                         sqlConnection.close()
                     }
                     else{
-                        println("Connection Not Obtained for:${asyncResult.failed()}")
+                        println("Connection Not Obtained for:${asyncResult.failed()}" +
+                                "\n ${asyncResult.cause()}\n StackTarce:${asyncResult.cause().printStackTrace()}")
                     }
                 })
 
+                /**
+                 * Since Fetching SQLConnection are within Asynchronous Handlers so,
+                 * Closing JDBC client or Service Reference before the SQL Connection
+                 * fetched CAUSES "java.sql.SQLException: An SQLException was
+                 * provoked by the following failure: java.lang.InterruptedException"
+                 */
                 // ...
-
-                // when done
-                reference.release();
+               // println "Closing JDBC CLIENT"
+                //jdbcClient.close()
+               // println "JDBC CLIENT Closed"
+                // when donelosing JDBC cLIENT
+                //reference.release()
             }
 
         })
+
+        context.response().setStatusCode(200).setStatusMessage("JDBC Operations Successful").end()
     }
 }
