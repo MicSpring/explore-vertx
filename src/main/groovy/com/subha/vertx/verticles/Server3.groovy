@@ -81,10 +81,10 @@ class Server3 extends AbstractVerticle{
         serviceDiscovery.getRecord(new JsonObject().put("name", "Server2"), { ar ->
             if (ar.succeeded() && ar.result() != null) {
                 // Retrieve the service reference
-                def reference = serviceDiscovery.getReference(ar.result())
-                // Retrieve the service object
-                def client = reference.get()
-                println "The Client class is: $client"
+                    def reference = serviceDiscovery.getReference(ar.result())
+                    // Retrieve the service object
+                    def client = reference.get()
+                    println "The Client class is: $client"
 
                 // You need to path the complete path
 
