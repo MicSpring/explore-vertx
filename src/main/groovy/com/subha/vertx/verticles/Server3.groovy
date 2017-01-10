@@ -1,5 +1,7 @@
 package com.subha.vertx.verticles
 
+import com.github.davidmoten.rx.jdbc.Database
+import com.github.davidmoten.rx.jdbc.tuple.Tuple2
 import com.google.inject.Inject
 import com.subha.vertx.guice.dependency.Dependency
 import com.subha.vertx.handler.DataHandler
@@ -18,6 +20,9 @@ import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.ext.web.handler.sockjs.SockJSHandler
 import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions
 import io.vertx.servicediscovery.ServiceDiscovery
+import rx.Observable
+
+import javax.sql.DataSource
 /**
  * Created by user on 12/14/2016.
  */
@@ -27,16 +32,19 @@ class Server3 extends AbstractVerticle{
     ServiceDiscovery serviceDiscovery
     CircuitBreakerOptions circuitBreakerOptions
     CircuitBreaker circuitBreaker
+    DataSource dataSource
 
     @Inject
-    public Server3(Dependency dependency){
+    public Server3(Dependency dependency, DataSource dataSource){
         this.dependency = dependency
+        this.dataSource = dataSource;
     }
 
     public void start() throws Exception {
 
         serviceDiscovery = ServiceDiscovery.create(vertx)
         println " **** The Dependency is: ${dependency.serve()}"
+        println " **** The DataSource is: $dataSource with Details:${dataSource.getConnection()}"
 
 
         def sockJSHandlerOptions = new SockJSHandlerOptions().setHeartbeatInterval(3000)
@@ -132,6 +140,7 @@ class Server3 extends AbstractVerticle{
                         ar.result(), // The record
                         new JsonObject()/*.put("user","sa").put("password","")*/);
 
+                println "The reference Object is:${reference.getClass()}"
                 // Retrieve the service object
                 JDBCClient jdbcClient = reference.get();
                 println "The JDBC Client is:$jdbcClient"
@@ -193,6 +202,56 @@ class Server3 extends AbstractVerticle{
                // println "JDBC CLIENT Closed"
                 // when donelosing JDBC cLIENT
                 //reference.release()
+
+                Database db =  Database.fromDataSource(dataSource)
+                db.update("create table Student (id integer primary key, name varchar(50), school varchar(50))")
+                    .count()
+                        .compose(
+
+
+                db.update("insert into Student(id, name, school) values (:id,:name,:school)")
+                        .parameter("id",1)
+                         .parameter("name","Subha")
+                        .parameter("school","Margaret")
+                        .dependsOnTransformer()
+                ).compose(
+
+                db.update("insert into Student(id, name, school) values (:id,:name,:school)")
+                        .parameter("id",2)
+                        .parameter("name","Subha2")
+                        .parameter("school","Margaret2")
+                        .dependsOnTransformer())
+                      .compose(
+
+               db.select("select id from Student ")
+                    .dependsOnTransformer()
+                    .getAs(Integer)
+                ).compose(
+                        db.select("SELECT NAME, SCHOOL FROM STUDENT WHERE ID=?")
+                        .parameterTransformer()
+                        .get({rs-> println "Student Name: ${rs.getString(1)} \n\n Student School:${rs.getString(2)}"})
+                ).subscribe(
+                        {data-> println "The Data is: ${data.getClass()}"},
+                        {ex ->
+                           // Exceptions.propagate(ex)
+                            ex.printStackTrace()
+                            return Observable.error(ex)
+                        }
+                )
+
+                db.select("SELECT NAME,SCHOOL FROM STUDENT WHERE ID = ? AND SCHOOL = ?")
+                .parameters(Observable.just(1,"Margaret", 2, "Margaret2"))
+                .getTupleN(Tuple2).subscribe(
+                        {tuple-> println "****** The Tuple is: ${tuple}"},
+                        {ex-> ex.printStackTrace()}
+
+                )
+                /*db.select("select name from Student where id=?")
+                        .parameters(studCnt)
+                        .getAs(String).subscribe(
+                        {studStr -> println "##### The Student String is:$studStr"}
+                )*/
+
             }
 
         })
